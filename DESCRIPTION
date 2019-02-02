@@ -1,0 +1,20 @@
+Package: GEOSystemBio
+Type: Package
+Title: GEO dataset Package
+Version: 0.1.0
+Date: 2019-02-01
+Authors@R: c(
+    person("Jianbin", "Lin", email = "jianbin.lin@mail.utoronto.ca", role = c("aut","cre"), comment = c(ORCID = "0000-0003-1904-0232"))
+    )
+Description: A template for an RStudio project of a basic R package with a
+             GitHub repository. rpt follows principles described in
+             Hadley Wickham's R Packages book and is compatible with CRAN
+             guidelines. The project is version controlled, contains testing
+             code, can be installed from GitHub using standard tools, and 
+             includes extensive instructions on how to install and customize.
+License: file LICENSE
+Encoding: UTF-8
+LazyData: true
+Suggests:
+    testthat
+RoxygenNote: 6.1.1
