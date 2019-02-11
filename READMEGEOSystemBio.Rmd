@@ -1,0 +1,157 @@
+---
+title: "READMEGEOSystemBio"
+output: html_document
+---
+
+
+# 'BCB420.2019.GEO'
+###(GEO Data annotation of human genes)
+
+## R Markdown
+
+##1.1 About this package:
+This package is used for mapping GEO genes into HGNC symbol. 
+## 2 GEO Data semantics
+
+GEO database stores expression data and experiment metadata.
+
+## 3 Data download 
+Log into https://www.ncbi.nlm.nih.gov/gds/ website. Key in "stress" in the search box. and click organism homo sapiens. Choose first one "Hypoxia effect on von Hippel Lindau-overexpressing renal cell carcinoma cells" by clikint it. On the right side downlaod section. Choose DataSet SOFT file and change its extention to .txt. save the file under sister directory of data folder. 
+
+## 3.1 Data cleanup
+
+setwd("/Users/Kevin/Desktop/Bioinformatics/BCB420/GEOSystemBio/data")
+list.files()
+
+filename_1 <- "GDS5810.txt"
+openfile_1<- file(filename_1, open = "r")
+
+filename_2 <-"GDS5810_clean.txt"
+openfile_2<- file(filename_2,open = "w")
+
+line <- readLines(openfile_1)
+
+for (i in 1:length(line)){
+while(line[i]==)
+{
+writeLines(print(line[i]),con=openfile_2)
+}
+}
+
+close(openfile_1)
+close(openfile_2)
+
+
+# read the file into tmp;      
+
+
+tmp <- readr::read_tsv(file.path("../data", "GDS5810_clean.txt"),
+                           col_names =TRUE)
+
+                        
+head(tmp)              
+# A tibble: 6 x 10
+  ID_REF IDENTIFIER GSM1588481 GSM1588485 GSM1588482 GSM1588486 GSM1588483 GSM1588487 GSM1588484
+   <dbl> <chr>           <dbl>      <dbl>      <dbl>      <dbl>      <dbl>      <dbl>      <dbl>
+1 7.90e6 chr1:5304…       7.21       7.03       7.05       7.12       7.31       7.33       7.37
+2 7.90e6 chr1:6301…       5.81       5.67       5.54       5.73       5.64       5.89       5.90
+3 7.90e6 OR4F17           5.75       5.82       5.58       5.69       5.62       5.85       5.94
+4 7.90e6 LOC100134…       7.06       7.06       7.26       7.22       7.23       7.76       7.48
+5 7.90e6 OR4F29           6.91       6.31       6.44       6.49       6.47       6.62       6.62
+6 7.90e6 chr1:5649…       9.68       9.59       9.11       9.22       9.58       9.62       9.67
+# … with 1 more variable: GSM1588488 <dbl>
+
+nrow(tmp)  #33297 genes were expressed in this dataset; 
+     
+#Let's see how many of "IDENTIFIER" showing up in this experiment
+
+
+#Let's see hom many of "ID_REF" in this experiment; 
+
+GEO_Unique_ID_REF <-unique(tmp$ID_REF) #There are about 33297 of unique ID_REF in this #experiment
+ 
+#26804 IDENTIFIERS which are also HGNC symbol have retrived from ID_REF. 
+
+#There are three possibilities 
+
+# Map IDENTIFIERS TO HGNC symbol; open a "Mart" object ..
+
+ myMart <- biomaRt::useMart("ensembl", dataset="hsapiens_gene_ensembl")
+
+ tmp_HGNC <- biomaRt::getBM(filters = "hgnc_symbol",
+                             attributes = "hgnc_symbol",  
+                             values = tmp$IDENTIFIER,
+                             mart = myMart)
+
+ head(tmp_HGNC) 
+ nrow(tmp_HGNC)  #there are 19867 of Identifiers are retrived from HGNC symbol; 
+ 
+ # There are still 26804 - 19867 = 6937 identifers are not retrived from HGNC symbol;  
+
+
+# There might be three cases; 
+
+# First scenario, the Identifier return has duplication; 
+
+sum(duplicated(tmp$IDENTIFIER)) #Indeed there are 6493 of duplication; 
+
+# Let's find out where the duplicate is;  
+
+ duplicated_ID_REF <- tmp$ID_REF[duplicated(tmp$IDENTIFIER)]
+ duplicated_IDENTIFIER <- tmp$IDENTIFIER[duplicated(tmp$IDENTIFIER)]
+ tmp[tmp$ID_REF %in% duplicated_ID_REF, ] 
+ 
+ # A tibble: 6,493 x 10
+   ID_REF IDENTIFIER GSM1588481 GSM1588485 GSM1588482 GSM1588486 GSM1588483 GSM1588487
+    <dbl> <chr>           <dbl>      <dbl>      <dbl>      <dbl>      <dbl>      <dbl>
+ 1 7.90e6 ATAD3C           8.67       9.02       8.34       8.62       8.67       8.83
+ 2 7.90e6 RNF207           7.12       7.00       6.88       7.05       7.00       7.25
+ 3 7.90e6 LOC101930…       6.10       6.02       5.88       5.95       5.90       6.02
+ 4 7.90e6 LOC101930…       6.07       5.95       5.81       5.88       5.83       5.95
+ 5 7.90e6 PRAMEF34P        6.05       6.01       5.92       5.97       5.86       6.11
+ 6 7.90e6 LOC101930…       6.07       5.95       5.81       5.88       5.83       5.95
+ 7 7.90e6 PRAMEF17         6.18       6.08       5.85       6.08       5.96       6.12
+ 8 7.90e6 KAZN             6.68       6.66       6.44       6.70       6.65       6.72
+ 9 7.90e6 LOC100132…       6.00       5.96       5.72       5.92       5.97       6.09
+10 7.90e6 RNVU1-17        12.4       12.9       12.0       12.8       12.8       12.3 
+# … with 6,483 more rows, and 2 more variables: GSM1588484 <dbl>, GSM1588488 <dbl>
+
+# validate target row 
+tmp[tmp$IDENTIFIER %in% c("ATAD3C","RNF207","PRAMEF34P"), ]
+# A tibble: 7 x 10
+   ID_REF IDENTIFIER GSM1588481 GSM1588485 GSM1588482 GSM1588486 GSM1588483 GSM1588487 GSM1588484 GSM1588488
+    <dbl> <chr>           <dbl>      <dbl>      <dbl>      <dbl>      <dbl>      <dbl>      <dbl>      <dbl>
+1 7896937 ATAD3C           7.39       7.52       7.00       7.26       7.41       7.48       7.45       7.46
+2 7896961 ATAD3C           8.67       9.02       8.34       8.62       8.67       8.83       8.84       8.80
+3 7897257 RNF207           6.79       6.83       6.71       6.85       6.86       6.97       7.12       7.04
+4 7897263 RNF207           7.12       7.00       6.88       7.05       7.00       7.25       7.36       7.29
+5 7898020 PRAMEF34P        6.05       6.01       5.92       5.97       5.86       6.11       6.13       5.96
+6 7898034 PRAMEF34P        6.05       6.01       5.92       5.97       5.86       6.11       6.13       5.96
+7 7912561 PRAMEF34P        6.05       5.99       5.90       5.95       5.88       6.10       6.16       5.94
+# remove target row
+tmp <- tmp[ ! (tmp$IDENTIFIER %in% duplicated_IDENTIFIER), ]
+ 
+#check result
+ any(duplicated(tmp$IDENTIFIER))  now result is FALSE; 
+
+
+Second scenario, there is some Identifier that does not appear in the HGNC symbol
+
+   sum(is.na(tmp$IDENTIFIER)) # there are nothing identifier shows as na;
+   sum(tmp$IDENTIFIER =="") # there are nothing space value in IDENTIFIER; 
+  
+ 
+
+
+Let's map HGNC symbol to IDENTIFIER
+GEO_IDENTIFIER <- tmp$IDENTIFIER
+GEO_Unique_Identifier <- unique(tmp$IDENTIFIER)
+names(GEO_IDENTIFIER) <- tmp$ID_REF
+head(GEO_IDENTIFIER)
+
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+
+
+

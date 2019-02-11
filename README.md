@@ -273,7 +273,7 @@ It's time to complete the first development cycle: save, check, commit, and push
 
 **Your package check must pass without errors, warnings or notes.** `rpt` passes the checks, and nothing you have done above should have changed this, if it was done correctly. Therefore something is not quite right if the checking code finds anything to complain about. Fix it now. You need a "known-good-state" to revert to, for debugging, in case problems arise later on.
 
-**Validate**
+**Validate**�
 
 Install your package from github and confirm that it can be loaded. In the console, type:
 
