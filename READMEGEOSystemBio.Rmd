@@ -20,8 +20,15 @@ Log into https://www.ncbi.nlm.nih.gov/gds/ website. Key in "stress" in the searc
 
 ## 3.1 Data cleanup
 
+if (! requireNamespace("readr")) {
+  install.packages("readr")
+}
+
+
+
 setwd("/Users/Kevin/Desktop/Bioinformatics/BCB420/GEOSystemBio/data")
 list.files()
+
 
 filename_1 <- "GDS5810.txt"
 openfile_1<- file(filename_1, open = "r")
@@ -29,14 +36,16 @@ openfile_1<- file(filename_1, open = "r")
 filename_2 <-"GDS5810_clean.txt"
 openfile_2<- file(filename_2,open = "w")
 
-line <- readLines(openfile_1)
 
-for (i in 1:length(line)){
-while(line[i]==)
-{
-writeLines(print(line[i]),con=openfile_2)
-}
-}
+line <-readLines(openfile_1)
+
+
+
+tx2 <-gsub(pattern="^(!.*|#.*)",replace="", line)
+
+
+writeLines(tx2,con=openfile_2)
+
 
 close(openfile_1)
 close(openfile_2)
@@ -45,8 +54,7 @@ close(openfile_2)
 # read the file into tmp;      
 
 
-tmp <- readr::read_tsv(file.path("../data", "GDS5810_clean.txt"),
-                           col_names =TRUE)
+tmp <- readr::read_tsv(file.path("../data", "GDS5810_clean.txt"),comment="^",col_names =TRUE,skip_empty_rows=TRUE)
 
                         
 head(tmp)              
