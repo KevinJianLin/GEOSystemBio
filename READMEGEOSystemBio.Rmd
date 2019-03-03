@@ -63,7 +63,7 @@ head(tmp)
 # … with 1 more variable: GSM1588488 <dbl>
 
     
-##Let's see how many of "IDENTIFIER" showing up in this experiment, it seems IDENTIFIER symbol is similar to HGNC symbmol and we can verify later;
+##Let's see how many of "IDENTIFIER" showing up in this experiment, In GEO databaes, most of  IDENTIFIER symbol is corresponding to HGNC symbmol;
 
 nrow(tmp)  #33297 entries in this dataset; 
 
@@ -99,7 +99,7 @@ sum(duplicated(tmp$IDENTIFIER)) #Indeed there are 6493 of duplication;
 # … with 7,816 more rows, and 3 more variables: GSM1588487 <dbl>,
 #   GSM1588484 <dbl>, GSM1588488 <dbl>
  
-# validate target row 
+## Let's pick up some HGNC symbols such as "OR4F17","OR4F29","M37726"  and validate target rows
 tmp[tmp$IDENTIFIER %in% c("OR4F17","OR4F29","M37726"), ]
 # A tibble: 10 x 10
    ID_REF IDENTIFIER GSM1588481 GSM1588485 GSM1588482 GSM1588486 GSM1588483
@@ -116,19 +116,22 @@ tmp[tmp$IDENTIFIER %in% c("OR4F17","OR4F29","M37726"), ]
 10 8.17e6 M37726           9.30       9.17       8.06       8.77       9.64
 # … with 3 more variables: GSM1588487 <dbl>, GSM1588484 <dbl>, GSM1588488 <dbl>
 
-# remove target row
+
+##  "OR4F17" symbols appears three times at # 1 and # 5 and #6; "OR4F29" appears ##  at #2 and #4
+
+##remove target row
 tmp <- tmp[ ! (tmp$IDENTIFIER %in% duplicated_IDENTIFIER), ]
  
 #check result
  any(duplicated(tmp$IDENTIFIER))  now result is FALSE; 
  
- nrow(tmp) # total of 25471 unique IDENTIFERs has been cleaned 33297 - 25471 =              # 7826 of duplicated entries has been removed;  
+ nrow(tmp) # total of 25471 unique IDENTIFERs has been cleaned 33297 - 25471 =  # 7826 of duplicated entries has been removed;  
 
  
 
 
 
-Second scenario, there is some Identifier that does not appear in the HGNC symbol
+#Second scenario, there is some Identifier that does not appear in the HGNC symbol
 
    sum(is.na(tmp$IDENTIFIER)) # there are nothing identifier shows as na;
    sum(tmp$IDENTIFIER =="") # there are nothing space value in IDENTIFIER; 
@@ -143,12 +146,68 @@ Second scenario, there is some Identifier that does not appear in the HGNC symbo
                              attributes = "hgnc_symbol",  
                              values =tmp$IDENTIFIER,
                              mart = myMart)
-                             
+  
+  head(biomart_HGNC_Table)                           
+## hgnc_symbol
+1     AADACL3
+2     AADACL4
+3       ACADM
+4      ACOT11
+5       ACTL8
+6      ACTRT2
 
- nrow(biomart_HGNC_Table_IDENTIFIER)  #there are 17798 of Identifiers are  
-                                      #retrived from HGNC table; 
-                              
- biomart_HGNC_Table_IDENTIFIER <- biomart_HGNC_Table$hgnc_symbol
+
+ nrow(biomart_HGNC_Table)  #there are 17798 of Identifiers have been retrived
+ nrow(tmp)                 
+#there are 25471 unique IDENTIFIERs, that means 25471 - 17798 = 7673 IDENTIFIERs are not          HGNC symbol.Let's find out what they are
+ 
+ 
+#convert type "list" to character                                    
+ biomart_HGNC_Table_IDENTIFIER <- biomart_HGNC_Table$hgnc_symbol 
+
+ unmapped_tmp <- tmp[ ! (tmp$IDENTIFIER %in% biomart_HGNC_Table_IDENTIFIER),]
+ 
+ head(unmapped_tmp)
+# A tibble: 6 x 10
+  ID_REF IDENTIFIER GSM1588481 GSM1588485 GSM1588482 GSM1588486 GSM1588483
+   <dbl> <chr>           <dbl>      <dbl>      <dbl>      <dbl>      <dbl>
+1 7.90e6 chr1:5304…       7.21       7.03       7.05       7.12       7.31
+2 7.90e6 chr1:6301…       5.81       5.67       5.54       5.73       5.64
+3 7.90e6 chr1:5649…       9.68       9.59       9.11       9.22       9.58
+4 7.90e6 chr1:5660…       9.31       8.77       8.43       9.68       9.76
+5 7.90e6 chr1:5680…       6.46       6.34       5.82       6.26       6.36
+6 7.90e6 cc               7.39       7.59       7.29       7.61       7.48
+# … with 3 more variables: GSM1588487 <dbl>, GSM1588484 <dbl>, GSM1588488 <dbl>
+ 
+nrow(unmapped_tmp)  #total of 7673 unmapped symbol; 
+
+view(unmapped_tmp)
+#these IDENTIFIERs has three main patterns. 
+
+#First pattern with starts with "chr" such as "chr1:53049-54936"; second pattern is like gene symbol but not in the CURRENT HGNC table such as "FAM213B"(could be previous HGNC symbol);Third patten starts with "LOC"" such as "LOC644083".
+
+#let's place them into three catgories;
+
+
+
+unmapped_tmp_chr_location <- unmapped_tmp$IDENTIFIER[grepl("chr",unmapped_tmp$IDENTIFIER)]
+length(unmapped_tmp_chr_location) #there are total of 6381 entries
+
+unmapped_tmp_LOC <- unmapped_tmp$IDENTIFIER[grepl("LOC",unmapped_tmp$IDENTIFIER)]
+length(unmapped_tmp_LOC) #there are total of 357 entries
+##Accoridng to https://www.ncbi.nlm.nih.gov/books/NBK3840/ secion of Conventions Symbol begins with LOC. It means published symbol s not available. For instance, LOC644083 IDENTIFIER, 644083 is GeneID which we can be used for query purpose. Since HGNC symbol is not avaialble, we are not able to map these genes.  
+
+
+unmapped_tmp_previous_HGNC <-unmapped_tmp$IDENTIFIER[!(grepl("chr",unmapped_tmp$IDENTIFIER))]
+length(unmapped_tmp_previous_HGNC) 
+
+unmapped_tmp_previous_HGNC <-unmapped_tmp$IDENTIFIER[!(grepl("chr|LOC",unmapped_tmp$IDENTIFIER))]
+length(unmapped_tmp_previous_HGNC) #total of 935 symbols; 
+
+#6381 + 357 + 935 = 7673 which is equal to number of unmapped_tmp;  
+ 
+ 
+ 
  
  
 # Let's map IDENTIFIERs to HGNC symbol
@@ -164,36 +223,9 @@ names(GEO_MAP_TO_HGNC) <- biomart_HGNC_Table_IDENTIFIER
 
 GEO_MAP_TO_HGNC
 
-##result
-
-
-
-#Let's find out unmapped "IDENTIFIER"s
-
-## Second scenario, there is some Identifier that does not appear in the HGNC symbol such as 
 
 
 
 
-This exercise is similar to the while loop exercise. The only difference is to put the code into a function. Write a function countDown() so that you can start the countdown call from any number. For example calling countDown(5) should give: [1]  "5"          "4"          "3"          "2"          "1"          "0"          "Lift Off!"
-
-<b>Task 2:</b>
-# A lifedays calculator function
- 
-myLifeDays <- function(birthday) {
-  if (missing(birthday)) {
-    print ("Enter your birthday as a string in \"YYYY-MM-DD\" format.")
-    return()
-  }
-  bd <- strptime(birthday, "%Y-%m-%d") # convert string to time
-  now <- format(Sys.time(), "%Y-%m-%d") # convert "now" to time
-  diff <- round(as.numeric(difftime(now, bd, unit="days")))
-  print(sprintf("This date was %d days ago.", diff))
-}
-
-call function myLifeDays("1932-09-25")  # Glenn Gould's birthday 
-what is the return value???
-
-Here is a good opportunity to practice programming: modify this function to accept a second argument. When a second argument is present (e.g. 10000) the function should print the calendar date on which the input date will be the required number of days ago. Then you could use it to know when to celebrate your 10,000th life-day, or your 777th anniversary or whatever.
 
 
