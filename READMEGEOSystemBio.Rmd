@@ -49,9 +49,9 @@ close(openfile_2)
 
 tmp <- readr::read_tsv(file.path("../data", "GDS5810_clean.txt"),comment="^",col_names =TRUE,skip_empty_rows=TRUE)
 
-                        
+                      
 head(tmp)              
-# A tibble: 6 x 10
+## A tibble: 6 x 10
   ID_REF IDENTIFIER GSM1588481 GSM1588485 GSM1588482 GSM1588486 GSM1588483 GSM1588487 GSM1588484
    <dbl> <chr>           <dbl>      <dbl>      <dbl>      <dbl>      <dbl>      <dbl>      <dbl>
 1 7.90e6 chr1:5304…       7.21       7.03       7.05       7.12       7.31       7.33       7.37
@@ -145,26 +145,55 @@ Second scenario, there is some Identifier that does not appear in the HGNC symbo
                              mart = myMart)
                              
 
- nrow(biomart_HGNC_Table)  #there are 17798 of Identifiers are retrived from HGNC                            #table; 
+ nrow(biomart_HGNC_Table_IDENTIFIER)  #there are 17798 of Identifiers are  
+                                      #retrived from HGNC table; 
+                              
+ biomart_HGNC_Table_IDENTIFIER <- biomart_HGNC_Table$hgnc_symbol
  
  
 # Let's map IDENTIFIERs to HGNC symbol
 
 GEO_IDENTIFIER <- tmp$IDENTIFIER
-GEO_Unique_Identifier <- unique(tmp$IDENTIFIER)
-names(GEO_IDENTIFIER) <- tmp$ID_REF
+
+names(GEO_IDENTIFIER) <- biomart_HGNC_Table
 head(GEO_IDENTIFIER)
 
 GEO_MAP_TO_HGNC <- tmp$IDENTIFIER
 GEO_MAP_TO_HGNC
-names(GEO_MAP_TO_HGNC) <- biomart_HGNC_Table
+names(GEO_MAP_TO_HGNC) <- biomart_HGNC_Table_IDENTIFIER
+
 GEO_MAP_TO_HGNC
+
+##result
+
+
+
+#Let's find out unmapped "IDENTIFIER"s
 
 ## Second scenario, there is some Identifier that does not appear in the HGNC symbol such as 
 
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
 
+This exercise is similar to the while loop exercise. The only difference is to put the code into a function. Write a function countDown() so that you can start the countdown call from any number. For example calling countDown(5) should give: [1]  "5"          "4"          "3"          "2"          "1"          "0"          "Lift Off!"
+
+<b>Task 2:</b>
+# A lifedays calculator function
+ 
+myLifeDays <- function(birthday) {
+  if (missing(birthday)) {
+    print ("Enter your birthday as a string in \"YYYY-MM-DD\" format.")
+    return()
+  }
+  bd <- strptime(birthday, "%Y-%m-%d") # convert string to time
+  now <- format(Sys.time(), "%Y-%m-%d") # convert "now" to time
+  diff <- round(as.numeric(difftime(now, bd, unit="days")))
+  print(sprintf("This date was %d days ago.", diff))
+}
+
+call function myLifeDays("1932-09-25")  # Glenn Gould's birthday 
+what is the return value???
+
+Here is a good opportunity to practice programming: modify this function to accept a second argument. When a second argument is present (e.g. 10000) the function should print the calendar date on which the input date will be the required number of days ago. Then you could use it to know when to celebrate your 10,000th life-day, or your 777th anniversary or whatever.
 
 
